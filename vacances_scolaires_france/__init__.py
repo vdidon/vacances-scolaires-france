@@ -2,6 +2,7 @@
 import csv
 import os
 import datetime
+import pandas as pd
 
 
 class UnsupportedYearException(Exception):
@@ -65,20 +66,36 @@ class SchoolHolidayDates(object):
             raise UnsupportedHolidayException("Unknown holiday name: " + name)
 
     def check_date(self, date):
-        if not type(date) is datetime.date:
-            raise ValueError("date should be a datetime.date")
-        if date.year < self.min_year or date.year > self.max_year:
-            raise UnsupportedYearException("No data for year: " + str(date.year))
+        if isinstance(date, list) or isinstance(date, pd.Series):
+            for d in date:
+                self.check_date(d)
+        else:
+            if not isinstance(date, datetime.date):
+                raise ValueError("date should be a datetime.date, a list of datetime.date, or a pandas Series of datetime.date")
+            if date.year < self.min_year or date.year > self.max_year:
+                raise UnsupportedYearException("No data for year: " + str(date.year))
 
     def is_holiday(self, date):
         self.check_date(date)
-        return date in self.data
+        if isinstance(date, list) or isinstance(date, pd.Series):
+            return [d in self.data for d in date]
+        else:
+            return date in self.data
 
     def is_holiday_for_zone(self, date, zone):
         self.check_date(date)
-        if date not in self.data:
-            return False
-        return self.data[date][self.zone_key(zone)]
+        if isinstance(date, list) or isinstance(date, pd.Series):
+            results = []
+            for d in date:
+                if d not in self.data:
+                    results.append(False)
+                else:
+                    results.append(self.data[d][self.zone_key(zone)])
+            return results
+        else:
+            if date not in self.data:
+                return False
+            return self.data[date][self.zone_key(zone)]
 
     def holidays_for_year(self, year):
         if year < self.min_year or year > self.max_year:
