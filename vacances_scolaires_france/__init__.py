@@ -82,6 +82,10 @@ class SchoolHolidayDates(object):
         else:
             return date in self.data
 
+    def is_holiday(self, date):
+        self.check_date(date)
+        return date in self.data
+
     def is_holiday_for_zone(self, date, zone):
         self.check_date(date)
         if isinstance(date, list) or isinstance(date, pd.Series):
@@ -100,10 +104,7 @@ class SchoolHolidayDates(object):
     def holidays_for_year(self, year):
         if year < self.min_year or year > self.max_year:
             raise UnsupportedYearException("No data for year: " + str(year))
-        
-        res = {k: v for k, v in self.data.items() if k.year == year}
-
-        return res
+        return {k: v for k, v in self.data.items() if k.year == year}
 
     def holiday_for_year_by_name(self, year, name):
         self.check_name(name)
